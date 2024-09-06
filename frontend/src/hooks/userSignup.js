@@ -1,9 +1,10 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useAuthContext } from "../context/AuthContext";
 
 const useSignup = () => {
    const [loading, setLoading] = useState(false);
-
+   const {setAuthUser} = useAuthContext();
    const signup = async ({ name, username, password, confirmPassword, gender }) => {
       const success = handleInputErrors({ name, username, password, confirmPassword, gender });
       if (!success) return;
@@ -17,6 +18,13 @@ const useSignup = () => {
             body: JSON.stringify({ name, username, password, confirmPassword, gender }), // Removed confirmPassword from the body if not needed by the backend
          });
          const data = await res.json();
+         if(data.error){
+            throw new Error(data.error);
+         }
+         //we will store user details in local storage
+         localStorage.setItem("dudy-user", JSON.stringify(data));
+         //using context api we can use the user details to login in
+         setAuthUser(data);
          console.log(data);
          toast.success("Sign up successful");
       } catch (error) {
