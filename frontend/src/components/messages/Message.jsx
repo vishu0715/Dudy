@@ -1,4 +1,13 @@
-const Message = () => {
+import { useAuthContext } from "../../context/AuthContext"
+import useConversation from "../../zustand/useConversation";
+
+const Message = ({message}) => {
+  const {authUser}  = useAuthContext();
+  const {selectedConversation} = useConversation();
+  const fromMe = message.senderId === authUser._id;
+  const chatClassName = fromMe ? "chat chat-end" : "chat chat-start";
+  const profilePic = fromMe ? authUser.profilePic : selectedConversation?.profilePic;
+  const bubbleBgColor = fromMe ? "bg-violet-400" : "bg-sky-400";
   return (
     <div className="chat chat-end">
         <div className="chat-image avatar">
