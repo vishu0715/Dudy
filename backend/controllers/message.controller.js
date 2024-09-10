@@ -1,6 +1,7 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js"; // Import the correct model
-
+import { getRecieverSocketId } from "../socket/socket.js";
+import { io } from "../socket/socket.js";
 export const sendMessage = async (req, res) => {
     try {
         const { message } = req.body;
@@ -25,21 +26,28 @@ export const sendMessage = async (req, res) => {
             receiverId,
             message,
         });
-        // Add the message ID to the conversation's message array
-       if(newMessage){
-        conversation.messages.push(newMessage._id);
-       }
-        //await conversation.save(); // Save the updated conversation
-        //await newMessage.save(); // Save the new message to the database
 
-        //for running parallely
+        // Add the message ID to the conversation's message array
+        if (newMessage) {
+            conversation.messages.push(newMessage._id);
+        }
+
+        // Save both conversation and message in parallel
         await Promise.all([conversation.save(), newMessage.save()]);
+
+        // Get the receiver's socket ID and emit the new message
+        const recieverSocketId = getRecieverSocketId(receiverId);
+        if (recieverSocketId) {
+            io.to(recieverSocketId).emit("newMessage", newMessage); // Use req.io instead of io
+        }
+
         res.status(201).json(newMessage);
     } catch (error) {
         console.log("Error in sending message:", error.message);
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
 
 export const getMessage = async (req, res) => {
    try{
